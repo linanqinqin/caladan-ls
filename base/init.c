@@ -6,6 +6,7 @@
 
 #include <base/init.h>
 #include <base/log.h>
+#include <base/syscall.h>
 #include <base/thread.h>
 
 #include "init_internal.h"
@@ -19,7 +20,7 @@ void __weak init_shutdown(int status)
 	/* linanqinqin */
 	log_flush();
 	/* end */
-	exit(status);
+	syscall_exit(status);
 }
 
 /* we initialize these early subsystems by hand */
