@@ -11,7 +11,7 @@ include $(ROOT_PATH)/build/config
 INC = -I$(ROOT_PATH)/inc
 # /* linanqinqin */
 # FLAGS  = -g -Wall -D_GNU_SOURCE $(INC) -m64 -mxsavec -m64 -mxsave -m64
-FLAGS  = -g -Wall -D_GNU_SOURCE $(INC) -m64 -mxsavec -m64 -mxsave -m64 -mxsaveopt 
+FLAGS  = -g -Wall -D_GNU_SOURCE $(INC) -m64 -mxsavec -m64 -mxsave -m64 -mxsaveopt -mfsgsbase
 # /* end */
 
 ifeq ($(CONFIG_NO_UINTR),n)
