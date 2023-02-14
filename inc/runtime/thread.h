@@ -4,9 +4,11 @@
 
 #pragma once
 
+#include <base/list.h>
 #include <base/thread.h>
 #include <base/types.h>
 #include <base/compiler.h>
+#include <base/trapframe.h>
 #include <runtime/preempt.h>
 #include <iokernel/control.h>
 
@@ -26,8 +28,6 @@ extern void thread_ready(thread_t *thread);
 extern void thread_ready_head(thread_t *thread);
 extern thread_t *thread_create(thread_fn_t fn, void *arg);
 extern thread_t *thread_create_with_buf(thread_fn_t fn, void **buf, size_t len);
-extern void __set_uthread_specific(thread_t *th, uint64_t val);
-extern uint64_t __get_uthread_specific(thread_t *th);
 extern void thread_set_fsbase(thread_t *th, uint64_t fsbase);
 
 DECLARE_PERTHREAD(thread_t *, __self);
@@ -47,14 +47,51 @@ inline thread_t *thread_self(void)
 	return perthread_read_stable(__self);
 }
 
+/*
+ * Thread support
+ */
+
+struct stack;
+
+struct thread {
+    struct thread_tf    tf;
+    struct list_node    link;
+    struct stack        *stack;
+    unsigned int        main_thread:1;
+    unsigned int        has_fsbase:1;
+    unsigned int        thread_ready;
+    unsigned int        thread_running;
+    unsigned int        last_cpu;
+    uint64_t        run_start_tsc;
+    uint64_t        ready_tsc;
+    uint64_t		fsbase;
+    uint64_t        tlsvar;
+#ifdef GC
+    struct list_node    gc_link;
+    unsigned int        onk;
+#endif
+    uint64_t 		lame_last_tsc;
+};
+
+
+static inline uint64_t __get_uthread_specific(thread_t *th)
+{
+    return th->tlsvar;
+}
+
+static inline void __set_uthread_specific(thread_t *th, uint64_t val)
+{
+    th->tlsvar = val;
+}
+
 static inline uint64_t get_uthread_specific(void)
 {
-    return __get_uthread_specific(thread_self());
+    return thread_self()->tlsvar;
 }
 
 static inline void set_uthread_specific(uint64_t val)
 {
-    __set_uthread_specific(thread_self(), val);
+    thread_self()->tlsvar = val;
 }
 
 

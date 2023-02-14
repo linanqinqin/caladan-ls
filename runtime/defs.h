@@ -49,28 +49,6 @@
  * Thread support
  */
 
-struct stack;
-
-struct thread {
-	struct thread_tf	tf;
-	struct list_node	link;
-	struct stack		*stack;
-	unsigned int		main_thread:1;
-	unsigned int		has_fsbase:1;
-	unsigned int		thread_ready;
-	unsigned int		thread_running;
-	unsigned int		last_cpu;
-	uint64_t		run_start_tsc;
-	uint64_t		ready_tsc;
-	uint64_t		fsbase;
-	uint64_t		tlsvar;
-#ifdef GC
-	struct list_node	gc_link;
-	unsigned int		onk;
-#endif
-	uint64_t 		lame_last_tsc;
-};
-
 typedef void (*runtime_fn_t)(void);
 
 /* assembly helper routines from switch.S */
