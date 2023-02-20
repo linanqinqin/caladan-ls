@@ -19,6 +19,7 @@ static size_t arp_static_sz;
 size_t arp_static_count;
 struct cfg_arp_static_entry *static_entries;
 int preferred_socket;
+bool use_sigaltstack = false;
 
 /* linanqinqin */
 /* LAME bundle size configuration */
@@ -444,6 +445,13 @@ static int parse_enable_transparent_hugepages(const char *name, const char *val)
   return 0;
 }
 
+static int parse_use_sigaltstack(const char *name, const char *val)
+{
+	use_sigaltstack = true;
+	log_warn("cfg: using sigaltstack, preemption is not supported");
+	return 0;
+}
+
 /*
  * Parsing Infrastructure
  */
@@ -486,7 +494,6 @@ static const struct cfg_handler cfg_handlers[] = {
 	{ "enable_directpath", parse_enable_directpath, false },
 	{ "enable_gc", parse_enable_gc, false },
 	{ "enable_transparent_hugepages", parse_enable_transparent_hugepages, false},
-
 };
 
 /**

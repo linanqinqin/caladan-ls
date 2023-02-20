@@ -56,6 +56,7 @@ struct stack;
 struct thread {
     struct thread_tf    tf;
     struct list_node    link;
+    struct stack        *syscallstack;
     struct stack        *stack;
     unsigned int        main_thread:1;
     unsigned int        has_fsbase:1;

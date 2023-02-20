@@ -920,6 +920,11 @@ static __always_inline thread_t *__thread_create(void)
 	preempt_enable();
 
 	th->stack = s;
+	th->syscallstack = stack_alloc();
+
+	BUG_ON(!th->syscallstack);
+
+
 	th->main_thread = false;
 	th->has_fsbase = false;
 	th->thread_ready = false;
@@ -1039,6 +1044,8 @@ static void thread_finish_exit(void)
 	}
 
 	stack_free(th->stack);
+	if (th->syscallstack)
+		stack_free(th->syscallstack);
 	/* linanqinqin */
 #ifdef CONFIG_LAME_XSAVEOPT
 	lame_xsave_buf_free(th);
