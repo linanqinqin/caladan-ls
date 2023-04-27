@@ -1023,6 +1023,20 @@ int thread_spawn_main(thread_fn_t fn, void *arg)
 	return 0;
 }
 
+void thread_free(thread_t *th)
+{
+	gc_remove_thread(th);
+	stack_free(th->stack);
+	if (th->syscallstack)
+		stack_free(th->syscallstack);
+	/* linanqinqin */
+#ifdef CONFIG_LAME_XSAVEOPT
+	lame_xsave_buf_free(th);
+#endif
+	/* end */
+	tcache_free(perthread_ptr(thread_pt), th);
+}
+
 static void thread_finish_exit(void)
 {
 	struct thread *th = thread_self();
@@ -1032,7 +1046,6 @@ static void thread_finish_exit(void)
 	lame_bundle_remove_uthread(myk(), th); 	// remove the uthread from the lame bundle
 	/* end */
 
-	gc_remove_thread(th);
 	perthread_store(__self, NULL);
 
 	/* if the main thread dies, kill the whole program */
@@ -1043,15 +1056,7 @@ static void thread_finish_exit(void)
 		init_shutdown(EXIT_SUCCESS);
 	}
 
-	stack_free(th->stack);
-	if (th->syscallstack)
-		stack_free(th->syscallstack);
-	/* linanqinqin */
-#ifdef CONFIG_LAME_XSAVEOPT
-	lame_xsave_buf_free(th);
-#endif
-	/* end */
-	tcache_free(perthread_ptr(thread_pt), th);
+	thread_free(th);
 
 	spin_lock(&myk()->lock);
 	schedule();
