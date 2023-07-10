@@ -166,25 +166,8 @@ void preempt(void)
 
 int preempt_init_thread(void)
 {
-	stack_t ss;
-	struct stack *stk;
-
 	perthread_store(preempt_cnt, PREEMPT_NOT_PENDING);
 	perthread_store(uintr_stack, (void *)REDZONE_SIZE);
-
-	if (!use_sigaltstack)
-		return 0;
-
-	stk = stack_alloc();
-	if (!stk)
-		return -ENOMEM;
-
-	ss.ss_sp = &stk->usable[0];
-	ss.ss_size = RUNTIME_STACK_SIZE;
-	ss.ss_flags = 0;
-	if (sigaltstack(&ss, NULL) == -1)
-		return -errno;
-
 	return 0;
 }
 
@@ -201,9 +184,6 @@ int preempt_init(void)
 	int ret;
 	struct cpuid_info regs;
 #endif
-
-	if (use_sigaltstack)
-		return 0;
 
 	act.sa_flags = SA_SIGINFO | SA_NODEFER;
 
