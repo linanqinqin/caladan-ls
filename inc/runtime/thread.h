@@ -57,49 +57,31 @@ static inline thread_t *thread_self(void)
 struct stack;
 
 struct thread {
-    struct thread_tf    tf;
-    struct list_node    link;
+    bool        main_thread:1;
+    bool        has_fsbase:1;
+    bool        thread_ready:1;
+    bool        junction_thread;
+    bool        thread_running;
+    bool        in_syscall;
+    atomic8_t        interrupt_state;
+    struct thread_tf    *entry_regs;
+    unsigned long    junction_tstate_buf[20];
     struct stack        *stack;
-    unsigned int        main_thread:1;
-    unsigned int        has_fsbase:1;
-    unsigned int        thread_ready;
-    unsigned int        thread_running;
-    unsigned int        last_cpu;
-    uint64_t        run_start_tsc;
+    uint16_t        last_cpu;
+    uint16_t        cur_kthread;
     uint64_t        ready_tsc;
+    struct thread_tf    tf;
     uint64_t		fsbase;
-    uint64_t        tlsvar;
-     // Trapframe used by junction to stash registers on syscall entry
-    struct thread_tf	junction_tf;
-    unsigned long    junction_tstate_buf[24];
+    struct list_node    link;
+    struct list_node    interruptible_link;
+    bool        link_armed;
 #ifdef GC
     struct list_node    gc_link;
     unsigned int        onk;
 #endif
+    uint64_t        run_start_tsc;
     uint64_t 		lame_last_tsc;
 };
-
-
-static inline uint64_t __get_uthread_specific(thread_t *th)
-{
-    return th->tlsvar;
-}
-
-static inline void __set_uthread_specific(thread_t *th, uint64_t val)
-{
-    th->tlsvar = val;
-}
-
-static inline uint64_t get_uthread_specific(void)
-{
-    return thread_self()->tlsvar;
-}
-
-static inline void set_uthread_specific(uint64_t val)
-{
-    thread_self()->tlsvar = val;
-}
-
 
 /*
  * High-level routines, use this API most of the time.
