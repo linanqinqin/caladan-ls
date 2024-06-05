@@ -73,6 +73,7 @@ struct thread {
     uint16_t        last_cpu;
     uint16_t        cur_kthread;
     uint64_t        ready_tsc;
+    uint64_t        total_cycles;
     struct thread_tf    tf;
     uint64_t		fsbase;
     struct list_node    link;
@@ -84,6 +85,8 @@ struct thread {
     uint64_t        run_start_tsc;
     uint64_t 		lame_last_tsc;
 };
+
+extern uint64_t thread_get_total_cycles(thread_t *th);
 
 /*
  * High-level routines, use this API most of the time.
