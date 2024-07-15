@@ -67,10 +67,10 @@
 /*
  * Thread Structure - Trapframe Offset
  * 
- * The thread_tf is located at offset 200 from the start of the thread structure.
+ * The thread_tf is located at offset 112 from the start of the thread structure.
  */
 
-#define THREAD_TF_OFFSET            (200)    /* offset of tf in thread_t */
+#define THREAD_TF_OFFSET            (112)    /* offset of tf in thread_t */
 
 
 /*

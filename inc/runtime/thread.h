@@ -68,7 +68,7 @@ struct thread {
     bool        xsave_area_in_use:1;
     atomic8_t        interrupt_state;
     struct thread_tf    *entry_regs;
-    unsigned long    junction_tstate_buf[25];
+    unsigned long    junction_tstate_buf[8];
     struct stack        *stack;
     uint16_t        last_cpu;
     uint16_t        cur_kthread;
@@ -82,6 +82,7 @@ struct thread {
     struct list_node    gc_link;
     unsigned int        onk;
 #endif
+    unsigned long    junction_cold_state_buf[32];
     uint64_t        run_start_tsc;
     uint64_t 		lame_last_tsc;
 };
