@@ -25,6 +25,7 @@
 #include <runtime/preempt.h>
 /* linanqinqin */
 #include "lame.h"
+#include <linux/lame.h>
 /* end */
 
 
@@ -485,6 +486,9 @@ BUILD_ASSERT(LAME_UTHREAD_WRAPPER_SIZE == 0x20); /* must be 32 bytes */
 
 /* Verify thread structure trapframe offset */
 BUILD_ASSERT(THREAD_TF_OFFSET == offsetof(struct thread, tf));
+
+/* Verify red zone size */
+BUILD_ASSERT(LAME_RZ_BYTES == LAME_REDZONE_BYTES);
 /* end */
 
 DECLARE_PERTHREAD(struct kthread *, mykthread);

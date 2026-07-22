@@ -71,3 +71,9 @@
  */
 
 #define THREAD_TF_OFFSET            (0)      /* offset of tf in thread_t */
+
+
+/*
+ * Red zone
+ */
+#define LAME_RZ_BYTES               128   /* x86-64 SysV ABI */

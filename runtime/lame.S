@@ -16,7 +16,7 @@
  */
 .macro bretq
     popfq
-    retq 	$128
+    retq 	$LAME_RZ_BYTES
     ud2
 .endm
 
