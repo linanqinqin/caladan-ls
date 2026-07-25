@@ -607,6 +607,30 @@ static __always_inline __nofp bool is_apptext(uint64_t rip)
 	return (rip >= text_section_start && rip < text_section_end);
 }
 
+/*
+ * Threads with active or stale rseq state require Junction's scheduler fixup
+ * before resuming. LAME cannot safely provide that fixup for its bret frame,
+ * so conservatively avoid switching the entire bundle if any member needs it.
+ */
+static __always_inline __nofp bool lame_bundle_needs_fixup(struct kthread *k)
+{
+	struct lame_bundle *bundle = &k->lame_bundle;
+	unsigned int i;
+
+	for (i = 0; i < bundle->size; i++) {
+		thread_t *th;
+
+		if (!bundle->uthreads[i].present)
+			continue;
+
+		th = bundle->uthreads[i].uthread;
+		if (th->junction_thread && needs_fixup(th))
+			return true;
+	}
+
+	return false;
+}
+
 /**
  * lame_handle - handles LAME exception and performs context switch
  * 
@@ -626,9 +650,11 @@ __always_inline __nofp void lame_handle(uint64_t rip)
 
 	/* no switching if: 
 	 * - not in app text
-	 * - only one uthread in the bundle */
+	 * - only one uthread in the bundle
+	 * - a bundle member requires scheduler fixup */
 	if (unlikely( (!is_apptext(rip)) || 
-					(lame_bundle_get_used_count(k) <= 1) )) {
+					(lame_bundle_get_used_count(k) <= 1) ||
+					lame_bundle_needs_fixup(k) )) {
 		preempt_enable();
 		perthread_decr(in_lame);
 		lame_stall();

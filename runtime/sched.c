@@ -47,6 +47,14 @@ static DEFINE_PERTHREAD(uint64_t, last_tsc);
 // Junction overrides this function.
 void __weak on_sched(thread_t *th) {}
 
+/* linanqinqin */
+// Junction overrides this function.
+bool __weak needs_fixup(thread_t *th)
+{
+	return false;
+}
+/* end */
+
 /**
  * In inc/runtime/thread.h, this function is declared inline (rather than static
  * inline) so that it is accessible to the Rust bindings. As a result, it must

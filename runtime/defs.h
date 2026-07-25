@@ -80,6 +80,9 @@ extern void __lame_entry2_bret();
 extern void __lame_entry_stall_bret();
 extern void __lame_entry_nop_bret();
 extern void __lame_entry_bret_slowpath();
+
+/* Junction overrides this to identify threads requiring scheduler fixup. */
+extern bool needs_fixup(thread_t *th);
 /* end */
 
 /* linanqinqin */
