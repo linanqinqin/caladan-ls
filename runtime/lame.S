@@ -94,6 +94,7 @@
  * __lame_jmp_thread_direct - LAME-specific context switch without preemption
  * @oldtf: the trap frame to save (%rdi)
  * @newtf: the trap frame to restore (%rsi)
+ * @new_fsbase: the destination uthread's FS base (%rdx)
  *
  * This function performs the same context switch as __jmp_thread_direct
  * but without the preemption handling and thread_running flag management,
@@ -137,6 +138,12 @@ __lame_jmp_thread_direct:
 	preempt_on
 	/* exit in_lame */
 	lame_out
+
+	/*
+	 * Select the destination uthread's TLS base at the final handoff. No C
+	 * code may run with the destination FS base before its context is active.
+	 */
+	wrfsbase %rdx
 
 	/* jump into trap frame */
 	jmpq	*%r8

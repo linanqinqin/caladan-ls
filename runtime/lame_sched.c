@@ -110,6 +110,17 @@ int lame_bundle_add_uthread(struct kthread *k, thread_t *th, bool set_active)
 		return -ENOSPC;
 	}
 
+	/*
+	 * Threads without a private FS base use the runtime FS base of the
+	 * kthread on which they run. Secondary bundle members bypass jmp_thread(),
+	 * so establish their effective FS base before LAME can select them.
+	 *
+	 * Keep has_fsbase false: if this thread later migrates, the destination
+	 * kthread must be allowed to replace this value with its runtime FS base.
+	 */
+	if (!th->has_fsbase)
+		th->fsbase = perthread_read(runtime_fsbase);
+
 	/* Add the uthread to the first empty slot */
 	bundle->uthreads[first_empty_slot].uthread = th;
 	bundle->uthreads[first_empty_slot].present = true;
@@ -682,7 +693,8 @@ __always_inline __nofp void lame_handle(uint64_t rip)
 #endif
 
 		/* Call __lame_jmp_thread_direct to perform context switch */
-		__lame_jmp_thread_direct(&cur_th->tf, &next_th->tf);
+		__lame_jmp_thread_direct(&cur_th->tf, &next_th->tf,
+					 next_th->fsbase);
 
 #ifdef CONFIG_LAME_TSC
 		tsc_start = __rdtsc();
@@ -712,7 +724,8 @@ __always_inline __nofp void lame_handle(uint64_t rip)
 #endif
 
 		/* Call __lame_jmp_thread_direct to perform context switch */
-		__lame_jmp_thread_direct(&cur_th->tf, &next_th->tf);
+		__lame_jmp_thread_direct(&cur_th->tf, &next_th->tf,
+					 next_th->fsbase);
 	}
 }
 

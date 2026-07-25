@@ -70,7 +70,8 @@ extern void uintr_asm_entry();
 extern void __lame_entry();
 extern void __lame_entry2();
 extern void __lame_jmp_thread_direct(struct thread_tf *oldtf,
-				    struct thread_tf *newtf);
+				    struct thread_tf *newtf,
+				    uint64_t new_fsbase);
 extern void __lame_entry2_pretend();
 extern void __lame_entry_nop();
 
