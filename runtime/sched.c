@@ -589,6 +589,20 @@ done:
 	jmp_thread(th);
 }
 
+/* linanqinqin */
+/*
+ * Remove the active thread before returning the remaining LAME bundle members
+ * to the runqueue. The caller continues handling the active thread through the
+ * regular scheduling path.
+ */
+static __always_inline void lame_prepare_for_schedule(struct kthread *k)
+{
+	lame_sched_disable(k);
+	lame_bundle_remove_uthread_at_active(k);
+	lame_sched_bundle_dismantle(k);
+}
+/* end */
+
 static __always_inline void enter_schedule(thread_t *curth)
 {
 	struct kthread *k = myk();
@@ -596,19 +610,7 @@ static __always_inline void enter_schedule(thread_t *curth)
 	uint64_t now_tsc, prog_cycles;
 
 	/* linanqinqin */
-	/* 
-	 * dismantle the lame bundle - two-step process:
-	 * 1. remove the current uthread from the lame bundle
-	 * 2. remove the remaining uthreads (if any)
-	 *
-	 * The reason for this is that the current uthread should be handled by Caladan's 
-	 * regular scheduling logic unchanged, while the remaining uthreads were picked 
-	 * from the runqueue by LAME and thus should be returned to the runqueue
-	 * by LAME as well.
-	 * */
-	lame_sched_disable(k); // disable lame scheduling
-	lame_bundle_remove_uthread_at_active(k); // remove the current activeuthread from the lame bundle
-	lame_sched_bundle_dismantle(k); // dismantle the lame bundle (if there is still uthreads)
+	lame_prepare_for_schedule(k);
 	/* end */
 
 	assert_preempt_disabled();
@@ -887,6 +889,15 @@ void thread_finish_yield(void)
 
 	assert_preempt_disabled();
 
+	/* linanqinqin */
+	/*
+	 * This path enters schedule() directly from the runtime stack. Remove the
+	 * current thread from its LAME bundle first so schedule() cannot return it
+	 * to the runqueue a second time while dismantling the remaining members.
+	 */
+	lame_prepare_for_schedule(k);
+	/* end */
+
 	spin_lock(&k->lock);
 
 	/* check for softirqs */
@@ -926,6 +937,11 @@ void thread_finish_cede(void)
 	struct kthread *k = myk();
 	thread_t *myth = thread_self();
 	uint64_t prog_cycles, tsc = rdtsc();
+
+	/* linanqinqin */
+	/* thread_finish_cede() also bypasses enter_schedule(). */
+	lame_prepare_for_schedule(k);
+	/* end */
 
 	/* update stats and scheduler state */
 	myth->thread_running = false;
