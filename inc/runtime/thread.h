@@ -85,6 +85,7 @@ struct thread {
     unsigned long    junction_cold_state_buf[32];
     uint64_t        run_start_tsc;
     uint64_t 		lame_last_tsc;
+    bool		lame_xstate_pending;
 };
 
 extern uint64_t thread_get_total_cycles(thread_t *th);

@@ -1050,6 +1050,7 @@ static __always_inline thread_t *__thread_create(void)
 	th->ready_tsc = 0;
 	th->total_cycles = 0;
 	th->xsave_area_in_use = false;
+	th->lame_xstate_pending = false;
 	atomic8_write(&th->interrupt_state, 0);
 
 	return th;

@@ -718,6 +718,12 @@ __always_inline __nofp void lame_handle(uint64_t rip)
 #ifdef CONFIG_LAME_TSC
 		uint64_t tsc_start = __rdtsc();
 #endif
+		/*
+		 * A preemption may suspend this handler after the LAME switch
+		 * returns but before xrstor. Junction must resume this continuation
+		 * directly rather than deliver a signal with transitional xstate.
+		 */
+		ACCESS_ONCE(cur_th->lame_xstate_pending) = true;
 		/* xsave */
 #ifdef CONFIG_LAME_XSAVEOPT
 		xsave_buf = cur_th->tf.xsave_area;
@@ -748,6 +754,8 @@ __always_inline __nofp void lame_handle(uint64_t rip)
 		/* This point is reached when switching back to this thread */
 		/* restore xsave state */
 		__builtin_ia32_xrstor64(xsave_buf, active_xstates); 
+		barrier();
+		ACCESS_ONCE(cur_th->lame_xstate_pending) = false;
 	
 #ifdef CONFIG_LAME_TSC
 		k->lame_bundle.total_xsave_cycles += __rdtsc() - tsc_start;
