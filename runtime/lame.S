@@ -134,16 +134,17 @@ __lame_jmp_thread_direct:
 	/* set first argument (in case new thread) */
 	movq    RDI(%rsi), %rdi /* ARG0 */
 
+	/*
+	 * Complete the destination TLS handoff before making the new context
+	 * preemptible. An interrupt after preempt_on observes destination __self
+	 * and stack state, so it must also observe the destination FS base.
+	 */
+	wrfsbase %rdx
+
 	/* re-enable preemption after context switch is complete */
 	preempt_on
 	/* exit in_lame */
 	lame_out
-
-	/*
-	 * Select the destination uthread's TLS base at the final handoff. No C
-	 * code may run with the destination FS base before its context is active.
-	 */
-	wrfsbase %rdx
 
 	/* jump into trap frame */
 	jmpq	*%r8
