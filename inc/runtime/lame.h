@@ -20,7 +20,6 @@ extern void lame_sched_bundle_dismantle_nolock(struct kthread *k);
 
 /* LAME scheduling functions */
 extern void lame_handle(uint64_t rip);
-extern void lame_handle_bret(uint64_t *ret);
 extern void lame_stall(void);
 extern void lame_handle_bret_slowpath(void);
 

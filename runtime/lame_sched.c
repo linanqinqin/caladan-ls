@@ -658,6 +658,10 @@ static __always_inline __nofp bool lame_active_has_pending_interrupt(
  * 3. Get current uthread's trapframe
  * 4. Get next uthread from bundle
  * 5. Call __jmp_thread_direct to perform context switch
+ *
+ * Do not log from this function or helpers on its exception path. Formatting
+ * code may use SIMD/FPU state before LAME has saved the interrupted thread's
+ * xstate. Record counters or trace data and report them after leaving LAME.
  */
 __attribute__((optimize("O3")))
 __always_inline __nofp void lame_handle(uint64_t rip)
@@ -780,12 +784,6 @@ __always_inline __nofp void lame_handle(uint64_t rip)
 		__lame_jmp_thread_direct(&cur_th->tf, &next_th->tf,
 					 next_th->fsbase);
 	}
-}
-
-__always_inline __nofp void lame_handle_bret(uint64_t *ret) {
-
-	log_warn("[LAME][func:lame_handle_bret] ret=0x%lx", *(ret+8));
-
 }
 
 __always_inline __nofp void lame_stall(void) {
