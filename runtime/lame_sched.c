@@ -631,6 +631,23 @@ static __always_inline __nofp bool lame_bundle_needs_fixup(struct kthread *k)
 	return false;
 }
 
+/*
+ * Directed signals are deferred while a multi-thread bundle is active because
+ * no member advertises cur_kthread ownership. Once a member with a pending
+ * interrupt becomes active, keep it active so it can reach a Junction syscall
+ * or yield boundary where normal signal delivery is safe.
+ *
+ * Do not inspect inactive members here: they must remain eligible for a LAME
+ * switch before this rule can pin them.
+ */
+static __always_inline __nofp bool lame_active_has_pending_interrupt(
+	struct kthread *k)
+{
+	thread_t *th = lame_sched_get_current_uthread_nocheck(k);
+
+	return th->junction_thread && atomic8_read(&th->interrupt_state) > 0;
+}
+
 /**
  * lame_handle - handles LAME exception and performs context switch
  * 
@@ -651,9 +668,11 @@ __always_inline __nofp void lame_handle(uint64_t rip)
 	/* no switching if: 
 	 * - not in app text
 	 * - only one uthread in the bundle
-	 * - a bundle member requires scheduler fixup */
+	 * - a bundle member requires scheduler fixup
+	 * - the active thread has a deferred interrupt */
 	if (unlikely( (!is_apptext(rip)) || 
 					(lame_bundle_get_used_count(k) <= 1) ||
+					lame_active_has_pending_interrupt(k) ||
 					lame_bundle_needs_fixup(k) )) {
 		preempt_enable();
 		perthread_decr(in_lame);

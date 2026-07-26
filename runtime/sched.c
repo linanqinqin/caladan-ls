@@ -542,7 +542,22 @@ done:
 
 	update_oldest_tsc(l);
 
-	store_release(&th->cur_kthread, l->kthread_idx);
+	/* original */
+	// store_release(&th->cur_kthread, l->kthread_idx);
+	/* end */
+	/* linanqinqin */
+	/*
+	 * A directed interrupt can only target the uthread currently executing on
+	 * a kthread. LAME switches bundle members without updating ownership, so
+	 * leave every member unowned while a multi-thread bundle is active. This
+	 * intentionally defers Junction signals until a normal scheduling
+	 * boundary instead of risking delivery to the wrong bundle member.
+	 */
+	if (lame_bundle_get_used_count(l) > 1)
+		store_release(&th->cur_kthread, NCPU);
+	else
+		store_release(&th->cur_kthread, l->kthread_idx);
+	/* end */
 
 	spin_unlock(&l->lock);
 
@@ -653,7 +668,13 @@ static __always_inline void enter_schedule(thread_t *curth)
 
 	update_oldest_tsc(k);
 	store_release(&curth->cur_kthread, NCPU);
-	th->cur_kthread = k->kthread_idx;
+	/* original */
+	// th->cur_kthread = k->kthread_idx;
+	/* end */
+	if (lame_bundle_get_used_count(k) > 1)
+		store_release(&th->cur_kthread, NCPU);
+	else
+		store_release(&th->cur_kthread, k->kthread_idx);
 	spin_unlock(&k->lock);
 
 	/* update exported thread run start time */
